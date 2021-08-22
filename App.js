@@ -25,13 +25,15 @@ class App extends Component {
   BOARD_SIZE = 360;
   MIN_SIZE = 10;
   MAX_SIZE = 20;
+  FOOD_GENERATE_TIME = 3000;
+  MOVE_TIME = 1000;
 
   constructor(props) {
     super(props);
     this.state.board = [...Array(this.state.size)].map(x=>Array(this.state.size).fill(0));
   }
 
-  score = () => {return this.state.snake.length;}
+  score = () => {return this.state.snake.length - 1;}
 
   onStart = () => {
     this.setState({view: "GAME"});
@@ -49,16 +51,16 @@ class App extends Component {
     switch (this.state.direction)
     {
       case "UP":
-        this.setState("direction", "LEFT");
+        this.setState({direction: "LEFT"});
         break;
       case "DOWN":
-        this.setState("direction", "LEFT");
+        this.setState({direction: "LEFT"});
         break;
       case "LEFT":
-        this.setState("direction", "DOWN");
+        this.setState({direction: "DOWN"});
         break;
       case "RIGHT":
-        this.setState("direction", "UP");
+        this.setState({direction: "UP"});
         break;
     }
   }
@@ -67,24 +69,160 @@ class App extends Component {
     switch (this.state.direction)
     {
       case "UP":
-        this.setState("direction", "RIGHT");
+        this.setState({direction: "RIGHT"});
         break;
       case "DOWN":
-        this.setState("direction", "RIGHT");
+        this.setState({direction: "RIGHT"});
         break;
       case "LEFT":
-        this.setState("direction", "UP");
+        this.setState({direction: "UP"});
         break;
       case "RIGHT":
-        this.setState("direction", "DOWN");
+        this.setState({direction: "DOWN"});
         break;
     }
   }
 
-  onPlay = () => {
-    this.setState({running: true, })
+  nextPos = () => {
+    let actualPos = this.state.snake[0];
+    let size = this.state.size;
+    switch (this.state.direction)
+    {
+      case "UP":
+        if (actualPos < size) return -1;
+        else return actualPos - size;
+        break;
+      case "DOWN":
+        if (actualPos + size >= size*size) return -1;
+        else return actualPos + size;
+        break;
+      case "LEFT":
+        if (actualPos % size == 0) return -1;
+        else return actualPos - 1;
+        break;
+      case "RIGHT":
+        if (actualPos % size == (size - 1)) return -1;
+        else return actualPos + 1;
+        break;
+    }
+
+    return -1;
   }
 
+  isTakenBySnake = (pos) => {
+    return this.state.snake.includes(pos);
+  }
+
+  isTakenByFood = (pos) => {
+    return this.state.food.includes(pos);
+  }
+
+  eatFood = (pos) => {
+    const snake = [...this.state.snake];
+    const food = [...this.state.food];
+    const score = this.state.score;
+
+    snake.unshift(pos);
+    const index = food.indexOf(pos);
+    if (index > -1) {
+      food.splice(index, 1);
+    }
+
+    console.log("Snake", snake);
+    console.log("Food", food);
+    this.setState({score: score+1, snake: snake, food: food});
+
+  }
+
+  normalMove = (pos) => {
+    const snake = [...this.state.snake];
+
+    for(let i=snake.length-1; i>0; i++)
+    {
+      snake[i] = snake[i-1];
+    }
+    snake[0] = pos;
+    this.setState({snake: snake});
+  }
+
+  endGame = () => {
+    this.setState({running: false});
+  }
+
+  generateFood = () => {
+    const food = [...this.state.food];
+    if (this.state.running && (this.state.snake.length + food.length < (this.state.size*this.state.size)*0.75))
+    {
+      let randomPos = Math.floor(Math.random() * this.state.size * this.state.size);
+      while (this.isTakenByFood(randomPos) || this.isTakenBySnake(randomPos))
+      {
+        randomPos = Math.floor(Math.random() * this.state.size * this.state.size);
+      }
+      food.push(randomPos);
+      this.setState({food: food});
+      setTimeout(()=>{this.generateFood()}, this.FOOD_GENERATE_TIME);
+    }
+  }
+
+  move = () => {
+    const size = this.state.size;
+
+    if (!this.state.running) return; 
+    let nextPos = this.nextPos();
+
+    if (nextPos > 0 && nextPos < size*size && !this.isTakenBySnake(nextPos))
+    {
+      if (this.isTakenByFood(nextPos))
+      {
+        this.eatFood(nextPos);
+      }
+      else
+      {
+        this.normalMove(nextPos);
+      }
+      setTimeout(()=>{this.move()}, this.MOVE_TIME);
+    }
+    else
+    {
+      this.endGame();
+    }
+  }
+
+  onReset = () => {
+    this.setState({
+      board: null,
+      snake: Array(0),
+      food: Array(0),
+      direction: "UP"
+  
+    })
+
+  }
+
+  onPlay = () => {
+    this.setState({
+      board: null,
+      snake: Array(0),
+      food: Array(0),
+      direction: "UP",
+      score: 0,
+  
+    }, () => {
+      let midPos = Math.floor(this.state.size*this.state.size/2 - this.state.size/2);
+      const snake = this.state.snake;
+      snake.push(midPos);
+
+      let randomPos = Math.floor(Math.random()*this.state.size*this.state.size);
+      while (randomPos == midPos) randomPos = Math.floor(Math.random()*this.state.size*this.state.size);
+      const food = this.state.food;
+      food.push(randomPos);
+
+      this.setState({running: true, snake: snake, food: food}, () => {
+        setTimeout(()=>{this.generateFood()}, this.FOOD_GENERATE_TIME);
+        setTimeout(()=>{this.move()}, this.MOVE_TIME);
+      })
+    });
+  }
 
   renderMenu()
   {
@@ -124,12 +262,12 @@ class App extends Component {
   renderBoard(){
     let boxes = []
     let box_size = (this.BOARD_SIZE / this.state.size) - 1;
-    console.log(box_size);
     for (let i=0; i<this.state.size*this.state.size; i++)
     {
         boxes.push(
-          <View style={[styles.box, {width: box_size, height: box_size},
-          (this.state.board[i] == 1) ? styles.box_snake : null]} 
+          <View key={i} style={[styles.box, {width: box_size, height: box_size},
+          (this.isTakenBySnake(i)) ? styles.box_snake : null,
+          (this.isTakenByFood(i)) ? styles.box_food : null]} 
           >
             <Image></Image>
           </View>
@@ -144,19 +282,17 @@ class App extends Component {
  {
    return (
      <View style={styles.steering_buttons}>
-       <TouchableOpacity style={styles.steering_button}>
+       <TouchableOpacity style={styles.steering_button} onPress={this.onLeftClick}>
          <Image
             style={styles.steering_button_img}
             source={require('./images/left-arrow.png')}
-            onPress={this.onLeftClick}
          ></Image>
        </TouchableOpacity>
 
-       <TouchableOpacity style={styles.steering_button}>
+       <TouchableOpacity style={styles.steering_button}  onPress={this.onRightClick}>
         <Image
             style={styles.steering_button_img}
             source={require('./images/right-arrow.png')}
-            onPress={this.onRightClick}
         ></Image>
        </TouchableOpacity>
      </View>
@@ -167,7 +303,7 @@ class App extends Component {
  {
    return (
      <View>
-       <TouchableOpacity style={styles.play_button}>
+       <TouchableOpacity style={styles.play_button} onPress={this.onPlay}>
          <Text style={styles.play_button_img}>Play</Text>
        </TouchableOpacity>
      </View>
@@ -341,6 +477,10 @@ const styles = StyleSheet.create({
 
   box_snake: {
     backgroundColor: "green",
+  },
+
+  box_food: {
+    backgroundColor: "purple",
   },
 
   steering_buttons: {
