@@ -12,28 +12,42 @@ import {
 class App extends Component {
   state = {
     size: 10,
-    view: "GAME",
+    view: "HIGHSCORE",
     board: null,
     snake: Array(0),
     food: Array(0),
     snake_color: "green",
     running: false,
-    direction: "UP"
+    direction: "UP",
+    highscore: []
 
   }
+  
   
   BOARD_SIZE = 360;
   MIN_SIZE = 10;
   MAX_SIZE = 20;
-  FOOD_GENERATE_TIME = 3000;
-  MOVE_TIME = 1000;
+  FOOD_GENERATE_TIME = 4000;
+  MOVE_TIME = 500;
+  MAX_RECORDS = 10;
 
   constructor(props) {
     super(props);
-    this.state.board = [...Array(this.state.size)].map(x=>Array(this.state.size).fill(0));
   }
 
-  score = () => {return this.state.snake.length - 1;}
+  addToHighscore = (score) => {
+    const highscore = [...this.state.highscore];
+    highscore.push({score: score, date: new Date()});
+
+    highscore.sort((a,b) => { return a.score < b.score });
+    this.setState({highscore: highscore});
+  }
+
+
+  score = () => {
+    let l = this.state.snake.length;
+    return (l > 0) ? l-1 : 0;
+  }
 
   onStart = () => {
     this.setState({view: "GAME"});
@@ -122,14 +136,13 @@ class App extends Component {
     const food = [...this.state.food];
     const score = this.state.score;
 
+
     snake.unshift(pos);
     const index = food.indexOf(pos);
     if (index > -1) {
       food.splice(index, 1);
     }
 
-    console.log("Snake", snake);
-    console.log("Food", food);
     this.setState({score: score+1, snake: snake, food: food});
 
   }
@@ -137,7 +150,8 @@ class App extends Component {
   normalMove = (pos) => {
     const snake = [...this.state.snake];
 
-    for(let i=snake.length-1; i>0; i++)
+
+    for(let i=snake.length-1; i>0; i--)
     {
       snake[i] = snake[i-1];
     }
@@ -146,6 +160,7 @@ class App extends Component {
   }
 
   endGame = () => {
+    this.addToHighscore(this.state.score);
     this.setState({running: false});
   }
 
@@ -168,6 +183,7 @@ class App extends Component {
     const size = this.state.size;
 
     if (!this.state.running) return; 
+
     let nextPos = this.nextPos();
 
     if (nextPos > 0 && nextPos < size*size && !this.isTakenBySnake(nextPos))
@@ -344,17 +360,7 @@ class App extends Component {
     }
   }
 
-  renderHighscore()
-  {
-    if (this.state.view == "HIGHSCORE")
-    {
-      return (
-        <View>
-          <Text>Highscore</Text>
-        </View>
-      )
-    }
-  }
+  
 
   renderReturn()
   {
@@ -368,6 +374,52 @@ class App extends Component {
         </TouchableOpacity>
       </View>
     )
+  }
+
+  renderHighscoreText()
+  {
+    return (
+      <View style={styles.score}>
+        <Text style={styles.score_text}>Highscore</Text>
+      </View>
+    )
+  }
+
+  renderHighscoreTable()
+  {
+    const highscore = [...this.state.highscore];
+    let records = [];
+    records.push(
+      <Text style={styles.record}>Lp | Score | Date</Text>
+    )
+    for (let i=0; i<this.MAX_RECORDS && i<highscore.length; i++)
+    {
+      const obj = highscore[i];
+      records.push(
+        <Text style={styles.record}>{i+1}    | {obj["score"]}        | {obj["date"].toDateString()}</Text>
+      )
+    }
+
+    return (
+      <View style={styles.highscore_table}>
+        {records}
+      </View>
+    )
+  }
+
+  renderHighscore()
+  {
+    if (this.state.view == "HIGHSCORE")
+    {
+      return (
+        <View>
+          {this.renderHighscoreText()}
+          {this.renderReturn()}
+          {this.renderHighscoreTable()}
+          
+        </View>
+      )
+    }
   }
 
   
@@ -513,6 +565,21 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "white",
 
+  },
+
+
+  highscore_table: {
+    marginTop: 50,
+    borderWidth: 1,
+    padding: 10,
+    borderColor: "black",
+    textAlign: "center",
+    alignSelf: "center",
+  },
+
+  record: {
+    fontSize: 25,
+    fontWeight: "500",
   }
 
 })
