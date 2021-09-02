@@ -12,7 +12,7 @@ import {
 class App extends Component {
   state = {
     size: 10,
-    view: "HIGHSCORE",
+    view: "MENU",
     board: null,
     snake: Array(0),
     food: Array(0),
@@ -240,6 +240,11 @@ class App extends Component {
     });
   }
 
+  onCredits = () =>
+  {
+    this.setState({view: "CREDITS"});
+  }
+
   renderMenu()
   {
     if (this.state.view == "MENU")
@@ -259,6 +264,9 @@ class App extends Component {
             </TouchableOpacity>
             <TouchableOpacity onPress={this.onHighscore} style={[styles.menu_button, styles.menu_button_highscore]}>
               <Text style={styles.menu_button_text}>Highscore</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={this.onCredits} style={[styles.menu_button, styles.menu_button_highscore]}>
+              <Text style={styles.menu_button_text}>Credits</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -422,6 +430,21 @@ class App extends Component {
     }
   }
 
+  renderCredits()
+  {
+    if (this.state.view == "CREDITS")
+    {
+      return (
+        <View>
+          <Text>Icons made by "https://www.freepik.com" Freepik from "https://www.flaticon.com/" Flaticon</Text>
+          <Text>Icons made by "https://www.flaticon.com/authors/pixel-perfect" Pixel perfect from "https://www.flaticon.com/" Flaticon</Text>
+          <Text>Icons made by "https://www.flaticon.com/authors/smashicons" Smashicons from "https://www.flaticon.com/" Flaticon</Text>
+          {this.renderReturn()}
+        </View>
+      )
+    }
+  }
+
   
 
  render() {
@@ -430,6 +453,7 @@ class App extends Component {
         {this.renderMenu()}
         {this.renderGame()}
         {this.renderHighscore()}
+        {this.renderCredits()}
       </View>
       
     )
