@@ -436,9 +436,12 @@ class App extends Component {
     {
       return (
         <View>
-          <Text>Icons made by "https://www.freepik.com" Freepik from "https://www.flaticon.com/" Flaticon</Text>
-          <Text>Icons made by "https://www.flaticon.com/authors/pixel-perfect" Pixel perfect from "https://www.flaticon.com/" Flaticon</Text>
-          <Text>Icons made by "https://www.flaticon.com/authors/smashicons" Smashicons from "https://www.flaticon.com/" Flaticon</Text>
+          
+          <View style={styles.credits}>
+            <Text>Icons made by "https://www.freepik.com" Freepik from "https://www.flaticon.com/" Flaticon</Text>
+            <Text>Icons made by "https://www.flaticon.com/authors/pixel-perfect" Pixel perfect from "https://www.flaticon.com/" Flaticon</Text>
+            <Text>Icons made by "https://www.flaticon.com/authors/smashicons" Smashicons from "https://www.flaticon.com/" Flaticon</Text>
+          </View>
           {this.renderReturn()}
         </View>
       )
@@ -480,7 +483,7 @@ const styles = StyleSheet.create({
   menu_logo: {
     width: 170,
     height: 170,
-    marginBottom: 80,
+    marginBottom: 40,
   },
   menu_button: {
     padding: 20,
@@ -604,6 +607,11 @@ const styles = StyleSheet.create({
   record: {
     fontSize: 25,
     fontWeight: "500",
+  },
+
+  credits: {
+    top: 100,
+    marginLeft: 10,
   }
 
 })
